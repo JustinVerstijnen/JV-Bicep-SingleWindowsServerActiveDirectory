@@ -9,8 +9,7 @@ The Active Directory installation is executed by the Azure Custom Script Extensi
 ```text
 jv-bicep-single-windows-server-active-directory/
 ├── getting-started-with-bicep.md
-├── main.bicep
-└── README-Bicep-guide.txt
+└── main.bicep
 ```
 
 The actual Azure deployment is defined in:
