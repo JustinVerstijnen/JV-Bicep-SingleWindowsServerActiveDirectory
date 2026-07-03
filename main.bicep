@@ -16,7 +16,7 @@ param adminUsername string = 'jvadmin'
 param adminPassword string
 
 @description('Public IPv4 address that is allowed to connect with RDP. Enter only the IP address, without /32.')
-param sourceIpAddress string = '1.2.3.4'
+param sourceIpAddress string
 
 @description('Windows Server VM size.')
 param vmSize string = 'Standard_B2ms'
