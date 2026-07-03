@@ -3,7 +3,7 @@ targetScope = 'resourceGroup'
 @description('Short project name. Keep this short because the Windows computer name has a 15 character limit.')
 @minLength(2)
 @maxLength(8)
-param projectName string = 'biceplab'
+param projectName string = 'biceptst'
 
 @description('Azure region where the resources will be deployed. By default, the resource group location is used.')
 param location string = resourceGroup().location
@@ -16,7 +16,7 @@ param adminUsername string = 'jvadmin'
 param adminPassword string
 
 @description('Public IPv4 address that is allowed to connect with RDP. Enter only the IP address, without /32.')
-param sourceIpAddress string
+param sourceIpAddress string = '1.2.3.4'
 
 @description('Windows Server VM size.')
 param vmSize string = 'Standard_B2ms'
@@ -59,7 +59,19 @@ var rdpRuleName = 'allow-rdp-from-admin-ip'
 // The password is base64 encoded only to avoid quoting issues in the PowerShell command.
 // The command itself is passed through protectedSettings, so it is not stored as normal deployment output.
 var encodedAdminPassword = base64(adminPassword)
-var installAdCommand = 'powershell.exe -ExecutionPolicy Unrestricted -NoProfile -Command "$ErrorActionPreference = ''Stop''; Install-WindowsFeature AD-Domain-Services -IncludeManagementTools; $adminPasswordPlain = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String(''${encodedAdminPassword}'')); $securePassword = ConvertTo-SecureString $adminPasswordPlain -AsPlainText -Force; Install-ADDSForest -DomainName ''${domainName}'' -DomainNetbiosName ''${domainNetbiosName}'' -SafeModeAdministratorPassword $securePassword -InstallDNS -Force -NoRebootOnCompletion:$true; $adminPasswordPlain = $null; shutdown.exe /r /t 60 /c ''Restart after Active Directory Domain Services installation''; exit 0"'
+
+var installAdScriptLines = [
+  '$ErrorActionPreference = \'Stop\''
+  'Install-WindowsFeature AD-Domain-Services -IncludeManagementTools'
+  '$adminPasswordPlain = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String(\'${encodedAdminPassword}\'))'
+  '$securePassword = ConvertTo-SecureString $adminPasswordPlain -AsPlainText -Force'
+  'Install-ADDSForest -DomainName \'${domainName}\' -DomainNetbiosName \'${domainNetbiosName}\' -SafeModeAdministratorPassword $securePassword -InstallDNS -Force -NoRebootOnCompletion:$true'
+  '$adminPasswordPlain = $null'
+  'shutdown.exe /r /t 60 /c \'Restart after Active Directory Domain Services installation\''
+  'exit 0'
+]
+
+var installAdCommand = 'powershell.exe -ExecutionPolicy Unrestricted -NoProfile -Command "${join(installAdScriptLines, '; ')}"'
 
 resource nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
   name: nsgName
